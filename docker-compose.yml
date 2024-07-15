@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8501:8501
+    volumes:
+      - $HOME/.aws/credentials:/home/appuser/.aws/credentials:ro
+      - $HOME/.aws/config:/home/appuser/.aws/config:ro
+      - $HOME/.aws/sso:/home/appuser/.aws/sso:ro
+    command: streamlit run main.py --server.port=8501 --global.developmentMode=false
