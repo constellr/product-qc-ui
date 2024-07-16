@@ -17,7 +17,7 @@
     },
     "L1_item_href": "https://landsatlook.usgs.gov/stac-server/collections/landsat",
     "L2_item_href": "https://landsatlook.usgs.gov/stac-server/collections/landsat",
-    "scene_datetime": "2022-08-26T18:05:53+00:00",
+    "scene_datetime": "2022-08-29T17:05:53+00:00",
     "cloud_cover": 31.48,
     "no_data": 0.0,
     "sun_elevation": 53.84,
