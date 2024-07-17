@@ -22,5 +22,6 @@
     "no_data": 0.0,
     "sun_elevation": 53.84,
     "epsg": 32614,
-    "atm_source": "ERAS"
+    "atm_source": "ERAS",
+    "lst_median": 15.0
 }

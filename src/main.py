@@ -22,56 +22,80 @@ def parse_json(path):
     metadata["rgb"] = open_image(f"{path}/rgb.png")
     metadata["lst"] = open_image(f"{path}/lst.png")
     metadata["count"] = 1
+    metadata["sclicing"] = True
+    metadata["colors"] = 1
     return metadata
+
+
+def timeline():
+    # Histogram/timeline
+    return alt.Chart(st.session_state.df).mark_bar().encode(
+        x=alt.X('scene_datetime:T', title=''),
+        y=alt.Y('count:Q', title=''),
+        color=alt.Color('colors', scale=alt.Scale(
+            domain=[0, 1, 2],
+            range=['#343840', '#ffc2c2', "#ff4242"]
+            ),
+        legend=None
+            )
+        ).properties(height=60).configure_axisY(grid=False, labels=False)
+    
+
+def ts():
+    return alt.Chart(st.session_state.df).mark_circle(size=60).encode(
+        x=alt.X('scene_datetime:T', title=''),
+        y=alt.Y('lst_median:Q', title='LST Median'),
+        color=alt.Color('colors:N', scale=alt.Scale(
+            domain=[0, 1, 2],
+            range=['#343840', '#ffc2c2', '#ff4242']
+            ),
+            legend=None
+        )
+        ).properties(
+            height=300,
+            width=600
+        )
+
+
+
 
 @st.cache_data
 def load():
-    df = pd.DataFrame([parse_json(d) for d in glob("tests/fixtures/*")])
-    return df
-df = load()
-
-
-with st.sidebar:
-    st.title("Filters")
+    df = df = pd.DataFrame([parse_json(d) for d in glob("tests/fixtures/*")])
     min_date = df["scene_date"].min().to_pydatetime()
     max_date = df["scene_date"].max().to_pydatetime()
-    slider = st.slider('Dates', min_value=min_date, max_value=max_date, value=[min_date, max_date])
+    selected = []
+    df_sliced = df[df['sclicing']]
+    return df, min_date, max_date, selected, df_sliced
+
+st.session_state.df, st.session_state.min_date, st.session_state.max_date, st.session_state.selected, st.session_state.df_sliced = load()
+
+# Sidebar
+with st.sidebar:
+    st.title("Filters")
+    date_slider = st.slider('Dates', min_value=st.session_state.min_date, max_value=st.session_state.max_date, value=[st.session_state.min_date, st.session_state.max_date])
     cloud_cover = st.slider('Cloud cover', min_value=0, max_value=100, value=100)
     na_cover = st.slider('No data cover', min_value=0, max_value=100, value=100)
     valid_cover = st.slider('Valid cover', min_value=0, max_value=100, value=100)
     sun_elevation = st.slider('Sun elevation', min_value=-90, max_value=90, value=(10, 90))
 
-df["sclicing"] = (
-    (df["scene_date"] >= slider[0]) & (df["scene_date"] <= slider[1]) &
-    (df["cloud_cover"] <= cloud_cover) &
-    (df["no_data"] <= na_cover) &
-    (df["valid_pixel"] <= valid_cover) &
-    (df["sun_elevation"] >= sun_elevation[0]) & (df["sun_elevation"] <= sun_elevation[1])
-)
-
-
-# time_count = df.groupby(pd.Grouper(key='scene_datetime', freq='1d')).size().reset_index(name='count')
-# time_count["highlight"] = (time_count["scene_datetime"] >= slider[0]) & (time_count["scene_datetime"] <= slider[1])
-
-st.title("QC")
-st.header(f"{df['sclicing'].sum()}/{len(df)} Images")
-
-# Create the histogram with Altair
-histogram = alt.Chart(df).mark_bar().encode(
-    x=alt.X('scene_datetime:T', title=''),
-    y=alt.Y('count:Q', title=''),
-    color=alt.condition(
-        alt.datum.sclicing,
-        alt.value('#ff4242'),
-        alt.value('#343840')
+    # Updating df_sliced
+    st.session_state.df["sclicing"] = (
+        (st.session_state.df["scene_date"] >= date_slider[0]) & (st.session_state.df["scene_date"] <= date_slider[1]) &
+        (st.session_state.df["cloud_cover"] <= cloud_cover) &
+        (st.session_state.df["no_data"] <= na_cover) &
+        (st.session_state.df["valid_pixel"] <= valid_cover) &
+        (st.session_state.df["sun_elevation"] >= sun_elevation[0]) & (st.session_state.df["sun_elevation"] <= sun_elevation[1])
     )
-).properties(height=60).configure_axisY(grid=False, labels=False)
+    st.session_state.df_sliced = st.session_state.df[st.session_state.df['sclicing']]
 
-st.altair_chart(histogram, use_container_width=True)
 
-df_sliced = df[df['sclicing']]
+# Main panel
+st.title("QC")
+header = st.container()
+
 event = st.dataframe(
-    df_sliced,
+    st.session_state.df_sliced,
     key=[0],
     column_order=["rgb", "lst", "scene_datetime", "cloud_cover", "no_data", "sun_elevation", "atm_source"],
     hide_index=True,
@@ -80,10 +104,27 @@ event = st.dataframe(
     column_config={
         "rgb": st.column_config.ImageColumn(width="small"),
         "lst": st.column_config.ImageColumn(width="small"),
-        }
+        },
 )
 
+# Slicing selected rows
+st.session_state.df_selected = st.session_state.df_sliced.iloc[event.selection.rows]
+st.session_state.selected = st.session_state.df_selected.index.tolist()
 
+# Header - image count update
+header.header(f"{len(st.session_state.df_selected)}/{len(st.session_state.df)} Images")
+
+# Header - timeline update
+st.session_state.df["colors"] = st.session_state.df["sclicing"].astype(int)
+st.session_state.df.loc[st.session_state.selected, "colors"] = 2
+# header.altair_chart(timeline(), use_container_width=True)
+header.altair_chart(ts(), use_container_width=True)
+
+
+# Upload button
 button = st.button("Done")
 if button:
-    st.write(f"You selected the following rows: {event.selection.rows}")
+    if "df_selected" in st.session_state.keys():
+        st.write(f"You selected the following rows: {st.session_state.selected}")
+    else:
+        st.write(f"You need to select the rows you want to provide to the client")
