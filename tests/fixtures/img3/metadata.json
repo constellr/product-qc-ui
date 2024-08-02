@@ -18,9 +18,9 @@
     "L1_item_href": "https://landsatlook.usgs.gov/stac-server/collections/landsat",
     "L2_item_href": "https://landsatlook.usgs.gov/stac-server/collections/landsat",
     "scene_datetime": "2022-08-27T17:05:53+00:00",
-    "cloud_cover": 31.48,
-    "no_data": 0.0,
-    "sun_elevation": 53.84,
+    "cloud_cover": 30.0,
+    "no_data": 30.0,
+    "sun_elevation": 72.3,
     "epsg": 32614,
     "atm_source": "ERAS",
     "lst_median": 15.0
