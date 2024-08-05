@@ -98,8 +98,8 @@ with st.sidebar:
         (df["cloud_cover"] <= cloud_cover[0]) &
         (df["no_data"] <= na_cover[0]) &
         (df["invalid_pixel"] <= invalid_cover[0]) &
-        (df["lst_min"] >= lst_min_slider[0]) &
-        (df["lst_max"] <= lst_max_slider[1]) &
+        (df["lst_min"] <= lst_min_slider[0]) &
+        (df["lst_max"] >= lst_max_slider[1]) &
         (df["sun_elevation"] >= sun_elevation[0]) & (df["sun_elevation"] <= sun_elevation[1])
     )
 
