@@ -36,7 +36,7 @@ def hist(df, col, bins=20):
         alt.Y('count()', stack=None),
         alt.Color('origin', scale=alt.Scale(
             domain=["all", "selected"],
-            range=['mistyrose', 'red']
+            range=['ivory', 'lime']
         ))
     ).properties(height=200).configure_axisY(grid=False, labels=False)
 
@@ -83,28 +83,30 @@ with st.sidebar:
     lst_max_slider = st.slider('Max LST', min_value=lst_min, max_value=lst_max, value=(lst_min, lst_max))
 
     # Updating df_sliced
-    df["viz"] = (
-        (df["scene_date"] >= date_slider[0]) & (df["scene_date"] <= date_slider[1]) &
-        (df["cloud_cover"] >= cloud_cover[0]) & (df["cloud_cover"] <= cloud_cover[1]) &
-        (df["no_data"] >= na_cover[0]) & (df["no_data"] <= na_cover[1]) &
-        (df["invalid_pixel"] >= invalid_cover[0]) & (df["invalid_pixel"] <= invalid_cover[1]) &
-        (df["lst_min"] >= lst_min_slider[0]) & (df["lst_min"] <= lst_min_slider[1]) &
-        (df["lst_max"] >= lst_max_slider[0]) & (df["lst_max"] <= lst_max_slider[1]) &
-        (df["sun_elevation"] >= sun_elevation[0]) & (df["sun_elevation"] <= sun_elevation[1])
-    )
-
     df["default_selected"] = (
         (df["scene_date"] >= date_slider[0]) & (df["scene_date"] <= date_slider[1]) &
         (df["cloud_cover"] <= cloud_cover[0]) &
         (df["no_data"] <= na_cover[0]) &
         (df["invalid_pixel"] <= invalid_cover[0]) &
-        (df["lst_min"] <= lst_min_slider[0]) &
-        (df["lst_max"] >= lst_max_slider[1]) &
+        (df["lst_min"] >= lst_min_slider[1]) &
+        (df["lst_max"] <= lst_max_slider[0]) &
         (df["sun_elevation"] >= sun_elevation[0]) & (df["sun_elevation"] <= sun_elevation[1])
     )
 
-    df["colors"] = df["default_selected"].map({True: "Validated", False: "Rejected"})
-    df.loc[df['viz'], "colors"] = "TBD"
+    df["viz"] = (
+        (df["scene_date"] >= date_slider[0]) & (df["scene_date"] <= date_slider[1]) &
+        (df["cloud_cover"] <= cloud_cover[1]) &
+        (df["no_data"] <= na_cover[1]) &
+        (df["invalid_pixel"] <= invalid_cover[1]) &
+        (df["lst_min"] >= lst_min_slider[0]) &
+        (df["lst_max"] <= lst_max_slider[1]) &
+        (df["sun_elevation"] >= sun_elevation[0]) & (df["sun_elevation"] <= sun_elevation[1])
+    )
+
+    df["colors"] = df["default_selected"].astype(int)
+    df.loc[df['viz'] & (df['default_selected'] == 0), "colors"] = 2
+    df["colors"] = df["colors"].map({0: "Rejected", 1: "Validated", 2: "TBD"})   
+    
     df_viz = df[df['viz']]
 
 
